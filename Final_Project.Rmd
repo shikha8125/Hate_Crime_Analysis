@@ -1,0 +1,557 @@
+---
+title: "Hate Crime Rates and State-Level Indicators in the U.S."
+output: html_document
+date: "2025-04-30"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+```
+
+## Group Members
+
+Keegan Fitzpatrick, Zixuan Peng, Shikha Ashara, Em McNeil
+
+## Introduction
+
+Hate crimes remain a significant concern in the United States, often reflecting deep-rooted social tensions and inequalities. Although such incidents are reported in every state, the rate at which they occur varies widely. This variation prompts an important investigation into the state-level social, political, and economic factors that may help explain these differences.
+
+This report aims to explore patterns in hate crime rates across U.S. states during a recent election period, with a particular focus on how a range of demographic and economic indicators may be associated with these trends. To avoid framing any single variable—such as political voting patterns—in a potentially biased light, we approach all predictors neutrally as part of a broader analysis of social factors.
+
+We focus on the following questions:
+
+- What is the relationship between presidential voting patterns (e.g., Trump vote share) and hate crime rates across states?
+
+- How do social demographic characteristics—such as high school education rates, poverty levels, and the proportion of non-citizens—relate to hate crime frequency?
+
+- Do indicators of a state's economic condition, such as median income and unemployment rate, correlate with hate crime rates?
+
+- Among all variables considered, which are the strongest predictors of state-level hate crime rates?
+
+## Thesis Statement
+
+This report argues that state-level hate crime rates in 2016 are more strongly associated with society, economic and political factors—specifically Trump vote share and income inequality—than with social demographic variables like education or poverty, suggesting that broader structural tensions may be key drivers of hate-related incidents.
+
+## Background
+
+This analysis uses a dataset compiled by FiveThirtyEight, combining data from the SPLC, FBI, U.S. Census, and Kaiser Family Foundation. It includes 51 observations (50 states + D.C.) and 12 variables representing hate crime rates, political preferences, and social and economic conditions at the state level. Each row represents a state or D.C., and each column is a different variable.
+
+The data reflect conditions during the 2016 U.S. presidential election, a time of heightened political tension and concern over identity-based violence. We examine how factors like education, income, poverty, non-citizen population, unemployment, and Trump vote share relate to state-level hate crime rates. These variables were selected to provide a broad view of the structural and political factors that may shape hate crime patterns.
+
+Cited links:
+
+- https://github.com/fivethirtyeight/data/blob/master/hate-crimes/README.md
+
+- https://fivethirtyeight.com/features/higher-rates-of-hate-crimes-are-tied-to-income-inequality/
+
+Each row represents one state and summarizes multiple 2016 metrics:
+
+- hate_crimes_per_100k_splc and avg_hatecrimes_per_100k_fbi: the number of hate crimes per 100,000 residents
+
+- share_voters_voted_trump: proportion of 2016 votes cast for Donald Trump
+
+- share_population_with_high_school_degree, share_non_citizen, share_white_poverty, share_non_white: social demographic indicators
+
+- median_household_income, share_unemployed_seasonal, gini_index: economic indicators
+
+Due to the nature of the data set, which merges several sources and relies on voluntary reporting (especially FBI data), the hate crime numbers may underreport actual incidents. Nevertheless, the data set offers a broad picture of factors potentially associated with hate crimes.
+
+#### Load the dataset and clean the data
+
+We begin by loading the dataset and cleaning it to remove any missing values. The dataset is stored in a CSV file named "hate_crimes.csv".
+
+There's no unusual factors in the data, all rows and columns follows their expected data types. The dataset contains 51 rows and 12 columns, with no missing values in the variables of interest.
+
+```{r}
+hatecrimes <- read_csv("hate_crimes.csv")
+
+hatecrimes_clean <- na.omit(hatecrimes)
+
+```
+
+#### Question 1: Trump Vote Share and Hate Crime Rate
+
+We first explore the relationship between Trump vote share and hate crime rates. We use the hate_crimes_per_100k_splc variable as our outcome variable, which represents the number of hate crimes per 100,000 residents in each state.
+
+We create a scatter plot to visualize the relationship between Trump vote share and hate crime rates, and then fit a linear regression model to quantify this relationship.
+
+```{r}
+
+ggplot(hatecrimes_clean, aes(x = share_voters_voted_trump, y = hate_crimes_per_100k_splc)) +
+  geom_point(alpha = 0.7) +
+  geom_smooth(method = "lm", se = TRUE, color = "blue") +
+  labs(
+    title = "Trump Vote Share vs Hate Crimes per 100k",
+    x = "Trump Vote Share",
+    y = "Hate Crimes per 100k (SPLC)"
+  )
+
+
+```
+
+
+#### Question 2: Social Demographic Characteristics and Hate Crime Rate
+
+In the second part of our analysis, we explore the relationship between hate crime rates and various social demographic characteristics. We will create scatter plots for each of the following variables: share_population_with_high_school_degree, share_non_citizen, and share_white_poverty. For each plot, we will add a line of best fit to visually assess any linear trend.
+
+```{r}
+
+ggplot(hatecrimes, aes(x = share_population_with_high_school_degree, y = hate_crimes_per_100k_splc)) +
+  geom_point(alpha = 0.7) +
+  geom_smooth(method = "lm", se = TRUE, color = "purple") +
+  labs(
+    title = "High School Graduation Rate vs Hate Crimes per 100k",
+    x = "High School Graduation Rate",
+    y = "Hate Crimes per 100k (SPLC)"
+  )
+
+ggplot(hatecrimes, aes(x = share_white_poverty, y = hate_crimes_per_100k_splc)) +
+  geom_point(alpha = 0.7) +
+  geom_smooth(method = "lm", se = TRUE, color = "darkred") +
+  labs(
+    title = "White Poverty Rate vs Hate Crimes per 100k",
+    x = "White Poverty Rate",
+    y = "Hate Crimes per 100k (SPLC)"
+  )
+
+
+ggplot(hatecrimes, aes(x = share_non_citizen, y = hate_crimes_per_100k_splc)) +
+  geom_point(alpha = 0.7) +
+  geom_smooth(method = "lm", se = TRUE, color = "orange") +
+  labs(
+    title = "Non-Citizen Population Rate vs Hate Crimes per 100k",
+    x = "Non-Citizen Population Rate",
+    y = "Hate Crimes per 100k (SPLC)"
+  )
+
+
+```
+
+#### Question 3: Economic Condition and Hate Crime Rate
+
+> In the third part of our analysis, we explore the relationship between hate crime rates and various economic conditions. We will create scatter plots for each of the following variables: median_household_income, share_unemployed_seasonal, and gini_index. For each plot, we will add a line of best fit to visually assess any linear trend.
+
+```{r}
+
+ggplot(hatecrimes, aes(x = median_household_income, y = hate_crimes_per_100k_splc)) +
+  geom_point(alpha = 0.7) +
+  geom_smooth(method = "lm", se = TRUE, color = "green") +
+  labs(
+    title = "Median Household Income vs Hate Crimes per 100k",
+    x = "Median Household Income",
+    y = "Hate Crimes per 100k (SPLC)"
+  )
+
+
+ggplot(hatecrimes, aes(x = share_unemployed_seasonal, y = hate_crimes_per_100k_splc)) +
+  geom_point(alpha = 0.7) +
+  geom_smooth(method = "lm", se = TRUE, color = "brown") +
+  labs(
+    title = "Seasonal Unemployment Rate vs Hate Crimes per 100k",
+    x = "Seasonal Unemployment Rate",
+    y = "Hate Crimes per 100k (SPLC)"
+  )
+
+
+ggplot(hatecrimes, aes(x = gini_index, y = hate_crimes_per_100k_splc)) +
+  geom_point(alpha = 0.7) +
+  geom_smooth(method = "lm", se = TRUE, color = "darkblue") +
+  labs(
+    title = "Gini Index vs Hate Crimes per 100k",
+    x = "Gini Index",
+    y = "Hate Crimes per 100k (SPLC)"
+  )
+
+
+```
+
+#### Question 4: Most Important Predictors of Hate Crime Rates
+
+> In the final part of our analysis, we will create a multiple linear regression model to identify the most important predictors of hate crime rates. We will include all the variables we have previously analyzed: share_voters_voted_trump, median_household_income, share_unemployed_seasonal, gini_index, share_white_poverty, share_population_with_high_school_degree, and share_non_citizen.
+> We will then assess the significance of each predictor variable and their relative influence on hate crime rates.
+
+```{r}
+
+model_full <- lm(hate_crimes_per_100k_splc ~ 
+                   share_voters_voted_trump +
+                   median_household_income +
+                   share_unemployed_seasonal +
+                   gini_index +
+                   share_white_poverty +
+                   share_population_with_high_school_degree +
+                   share_non_citizen,
+                 data = hatecrimes)
+
+
+library(broom)
+library(ggplot2)
+
+tidy(model_full) %>%
+  filter(term != "(Intercept)") %>%
+  ggplot(aes(x = reorder(term, estimate), y = estimate)) +
+  geom_col(fill = "skyblue") +
+  coord_flip() +
+  labs(
+    title = "Coefficients of Predictors in Full Model",
+    x = "Predictor Variables",
+    y = "Coefficient Estimate"
+  ) 
+
+
+```
+
+## Statistical Analysis
+
+#### Question 1: Trump Vote Share and Hate Crime Rate
+
+```{r}
+
+
+model1 <- lm(hate_crimes_per_100k_splc ~ share_voters_voted_trump, data = hatecrimes_clean)
+summary(model1)
+
+# Residual Plot
+plot(model1$fitted.values, resid(model1),
+     xlab = "Fitted Values", ylab = "Residuals",
+     main = "Residual Plot: Trump Vote Share")
+abline(h = 0, col = "red")
+
+# Q-Q Plot
+qqnorm(resid(model1), main = "Q-Q Plot: Trump Vote Share")
+qqline(resid(model1), col = "red")
+
+
+```
+Dependent variable: Hate Crimes per 100k (SPLC) - hate_crimes_per_100k_splc
+
+Independent variable: Trump Vote Share - share_voters_voted_trump
+
+Null Hypothesis (H₀): There is no relationship between Trump vote share and hate crime rate (the coefficient of Trump vote share is 0).
+Alternative Hypothesis (H₁): There is a significant relationship between Trump vote share and hate crime rate (the coefficient is not 0).
+
+
+
+**Alpha Level:** 0.05 (significance threshold)
+
+**Intercept and Coefficients:**
+
+Intercept (0.9987): This is the predicted hate crime rate when Trump vote share is 0.
+
+Trump Vote Share Coefficient (-1.4440): For each 1-unit increase in Trump vote share (e.g., 1.0 = 100%), the hate crime rate is predicted to decrease by 1.444 per 100,000. The negative coefficient suggests that higher Trump support is associated with lower hate crime rates when no other variables are considered.
+
+**Equation:**
+
+y^ = 0.9987 - 1.4440⋅x
+
+where y^ is the predicted hate crime rate and x is the Trump vote share.
+
+**t-Value and p-Value:**
+
+t-value = -5.681, p-value = 1.06e-06 (which is less than 0.05, confirming statistical significance).
+
+**R-squared:**
+
+R^2 = 0.4287
+This indicates that approximately 42.87% of the variation in hate crime rate is explained by Trump vote share alone.
+
+**Adjusted R^2:** 0.4155, still strong for a single predictor.
+
+**Residuals:**
+The residuals range from -0.326 to 0.581, indicating the model predictions are fairly accurate with limited deviation.
+
+**F-statistic:**
+F = 32.27, p-value = 1.06e-06 confirms the model is significant overall.
+
+**Conclusion:**
+There is a statistically significant negative relationship between Trump vote share and hate crime rate. States with higher Trump support tend to report lower hate crime rates when no other variables are included in the model.
+
+#### Question 2: Social Demographic Characteristics and Hate Crime Rate
+
+```{r}
+
+
+model2a <- lm(hate_crimes_per_100k_splc ~ share_population_with_high_school_degree, data = hatecrimes)
+summary(model2a)
+# Residual Plot
+plot(model2a$fitted.values, resid(model2a),
+     xlab = "Fitted Values", ylab = "Residuals",
+     main = "Residual Plot: High School Graduation Rate")
+abline(h = 0, col = "red")
+
+# Q-Q Plot
+qqnorm(resid(model2a), main = "Q-Q Plot: High School Graduation Rate")
+qqline(resid(model2a), col = "red")
+
+
+model2b <- lm(hate_crimes_per_100k_splc ~ share_white_poverty, data = hatecrimes)
+summary(model2b)
+
+# Residual Plot
+plot(model2b$fitted.values, resid(model2b),
+     xlab = "Fitted Values", ylab = "Residuals",
+     main = "Residual Plot: White Poverty Rate")
+abline(h = 0, col = "red")
+
+# Q-Q Plot
+qqnorm(resid(model2b), main = "Q-Q Plot: White Poverty Rate")
+qqline(resid(model2b), col = "red")
+
+
+model2c <- lm(hate_crimes_per_100k_splc ~ share_non_citizen, data = hatecrimes)
+summary(model2c)
+# Residual Plot
+plot(model2c$fitted.values, resid(model2c),
+     xlab = "Fitted Values", ylab = "Residuals",
+     main = "Residual Plot: Non-Citizen Rate")
+abline(h = 0, col = "red")
+
+# Q-Q Plot
+qqnorm(resid(model2c), main = "Q-Q Plot: Non-Citizen Rate")
+qqline(resid(model2c), col = "red")
+
+```
+
+Dependent variable: Hate Crimes per 100k (SPLC) - hate_crimes_per_100k_splc
+
+Independent variables: 
+
+High School Graduation Rate - share_population_with_high_school_degree
+
+White Poverty Rate - share_white_poverty
+
+Non-Citizen Rate - share_non_citizen
+
+Null Hypothesis (H₀): There is no relationship between each demographic variable and hate crime rate (the coefficient is 0).
+Alternative Hypothesis (H₁): There is a significant relationship between each demographic variable and hate crime rate (the coefficient is not 0).
+
+**Alpha Level:** 0.05 (significance threshold)
+
+**Intercept and Coefficients:**
+
+High School Graduation Rate Coefficient (2.3202): For each 1-unit increase (e.g., 1.0 = 100%), the hate crime rate increases by 2.32 per 100,000.
+
+White Poverty Rate Coefficient (-2.8368): Suggests a slight negative association, with higher white poverty associated with fewer reported hate crimes.
+
+Non-Citizen Rate Coefficient (1.9613): Indicates a potential positive relationship between the non-citizen population share and hate crime rate.
+
+**t-Value and p-Value:**
+
+High School Grad Rate: t = 2.179, p = 0.0346 → statistically significant
+
+White Poverty Rate: t = -2.003, p = 0.0512 → marginally significant
+
+Non-Citizen Rate: t = 1.646, p = 0.107 → not statistically significant
+
+**R-squared:**
+
+High School Grad Rate: R² = 0.095, Adjusted R² = 0.075
+
+White Poverty Rate: R² = 0.082
+
+Non-Citizen Rate: R² = 0.0593
+
+**Residuals:**
+All three models showed residuals ranging from approximately -0.33 to 1.21, with fairly reasonable spread and no extreme outliers.
+
+**F-statistic:**
+
+High School Grad Rate: F = 4.748, p = 0.0346
+
+White Poverty Rate: F = 4.014, p = 0.0512
+
+Non-Citizen Rate: F = 2.71, p = 0.107
+
+**Conclusion:**
+High school graduation rate is positively and significantly related to hate crime rate. White poverty rate shows marginal significance, while non-citizen population rate is not statistically significant.
+
+#### Question 3: Economic Condition and Hate Crime Rate
+
+```{r}
+
+model3a <- lm(hate_crimes_per_100k_splc ~ median_household_income, data = hatecrimes)
+summary(model3a)
+
+plot(model3a$fitted.values, resid(model3a),
+     xlab = "Fitted Values", ylab = "Residuals",
+     main = "Residual Plot: Median Income")
+abline(h = 0, col = "red")
+
+qqnorm(resid(model3a), main = "Q-Q Plot: Median Income")
+qqline(resid(model3a), col = "red")
+
+model3b <- lm(hate_crimes_per_100k_splc ~ share_unemployed_seasonal, data = hatecrimes)
+summary(model3b)
+
+plot(model3b$fitted.values, resid(model3b),
+     xlab = "Fitted Values", ylab = "Residuals",
+     main = "Residual Plot: Unemployment Rate")
+abline(h = 0, col = "red")
+
+qqnorm(resid(model3b), main = "Q-Q Plot: Unemployment Rate")
+qqline(resid(model3b), col = "red")
+
+model3c <- lm(hate_crimes_per_100k_splc ~ gini_index, data = hatecrimes)
+summary(model3c)
+
+plot(model3c$fitted.values, resid(model3c),
+     xlab = "Fitted Values", ylab = "Residuals",
+     main = "Residual Plot: Gini Index")
+abline(h = 0, col = "red")
+
+qqnorm(resid(model3c), main = "Q-Q Plot: Gini Index")
+qqline(resid(model3c), col = "red")
+
+
+```
+
+Dependent variable: Hate Crimes per 100k (SPLC) - hate_crimes_per_100k_splc
+
+Independent variables:
+
+Median Household Income - median_household_income
+
+Seasonal Unemployment Rate - share_unemployed_seasonal
+
+Gini Index - gini_index
+
+Null Hypothesis (H₀): There is no relationship between each economic variable and hate crime rate.
+Alternative Hypothesis (H₁): There is a significant relationship between each economic variable and hate crime rate.
+
+**Alpha Level:** 0.05 (significance threshold)
+
+**Intercept and Coefficients:**
+
+Median Income Coefficient (9.576e-06): A $1 increase in median income is associated with a very small increase in hate crime rate.
+
+Unemployment Rate Coefficient (2.0978): Suggests a positive relationship, but not statistically significant.
+
+Gini Index Coefficient (4.0205): Indicates that greater income inequality correlates with higher hate crime rates.
+
+**t-Value and p-Value:**
+
+Median Income: t = 2.512, p = 0.0157 → significant
+
+Unemployment: t = 0.561, p = 0.578 → not significant
+
+Gini Index: t = 2.341, p = 0.0237 → significant
+
+**R-squared:**
+
+Median Income: R² = 0.123
+
+Unemployment Rate: R² = 0.0069
+
+Gini Index: R² = 0.1085
+
+**Residuals:**
+All residuals range from roughly -0.33 to 1.18, showing acceptable prediction spread.
+
+**F-statistic:**
+
+Median Income: F = 6.311, p = 0.0157
+
+Unemployment: F = 0.3144, p = 0.578
+
+Gini Index: F = 5.478, p = 0.0237
+
+**Conclusion:**
+Median household income and Gini index are significantly associated with hate crime rate, suggesting that both income level and income inequality may play roles. Unemployment rate, however, does not show a significant relationship.
+
+#### Question 4: Most Important Predictors of Hate Crime Rates
+```{r}
+
+summary(model_full)
+
+```
+Dependent variable: Hate Crimes per 100k (SPLC) - hate_crimes_per_100k_splc
+
+Independent variables:
+
+Trump Vote Share - share_voters_voted_trump
+
+Median Household Income - median_household_income
+
+Seasonal Unemployment Rate - share_unemployed_seasonal
+
+Gini Index - gini_index
+
+White Poverty Rate - share_white_poverty
+
+High School Graduation Rate - share_population_with_high_school_degree
+
+Non-Citizen Rate - share_non_citizen
+
+Null Hypothesis (H₀): None of the predictors are significantly related to hate crime rate (all coefficients = 0).
+Alternative Hypothesis (H₁): At least one predictor is significantly associated with hate crime rate (some coefficients ≠ 0).
+
+**Alpha Level:** 0.05 (significance threshold)
+
+**Intercept and Coefficients:**
+
+Trump Vote Share: -1.255, p = 0.0118 → significant
+
+Gini Index: 4.736, p = 0.0307 → significant
+
+High School Grad Rate: 4.437, p = 0.0136 → significant
+
+All other variables (income, unemployment, poverty, non-citizen) → not statistically significant
+
+**t-Values and p-Values:**
+Three predictors are significant at p < 0.05: Trump vote share, Gini index, and education rate.
+Others have p-values > 0.3 and are not significant.
+
+**R-squared:** R^2 = 0.5764
+
+**Adjusted R^2** = 0.4963
+
+The model explains nearly 58% of variation in hate crime rate.
+
+**Residuals:**
+Residuals range from -0.287 to 0.395, showing a tight spread, with no major outliers.
+
+**F-statistic:**
+F = 7.192 on 7 and 37 DF, p-value = 1.93e-05 → The overall model is highly significant.
+
+**Conclusion:**
+Trump vote share, Gini index, and high school graduation rate are the most significant predictors in the full model. Other factors such as income, unemployment, and non-citizen rate are not significant when controlling for other variables.
+
+## Discussion
+
+**Summary:**
+
+This study aims to explore the relationship between hate crime rates and various political, social, and economic factors across U.S. states. We applied linear regression analysis to examine how Trump vote share, social demographic characteristics (such as high school graduation rate, white poverty rate, and non-citizen rate), and economic indicators (such as median household income, unemployment rate, and Gini index) influence the hate crime rate.
+
+The statistical results show a significant negative relationship between Trump vote share and hate crime rate. In other words, states with a higher proportion of Trump supporters tend to have relatively lower hate crime rates. This reflects the potential influence of political factors on social stability and public safety.
+
+In addition, we found a significant positive correlation between high school graduation rate and hate crime rate. This suggests that in states with higher education levels, residents may be more capable of or more willing to report hate crimes. While white poverty rate and non-citizen population rate showed certain trends, they were not statistically significant, and thus no clear conclusions can be drawn. Therefore, in terms of social factors, the population’s level of education appears to be an important determinant of social stability. Greater attention should be given to education to improve the overall quality of citizens, thereby contributing to a more harmonious and stable society.
+
+Economically, both median household income and the Gini index were significantly related to hate crime rates. In particular, the Gini index results indicate that greater income inequality may lead to more hate crimes, while the unemployment rate showed no significant effect. This suggests that income disparity may be a stronger driver of social instability. Efforts should be made to raise minimum wage standards and provide better income and unemployment support, thereby promoting stability through economic means.
+
+The multivariate regression model incorporating all variables further confirmed these conclusions: Trump vote share, Gini index, and high school graduation rate were identified as the most significant predictors of hate crime rates. Once these factors were controlled for, other variables lost statistical significance.
+
+**Limitations:**
+
+This study has a few limitations. Using data only from 2016 limits our ability to understand long-term trends. Incorporating multiple years of data could provide a clearer picture of changes over time. Additionally, relying on FBI and SPLC data, which depend on voluntary reporting, may result in underreporting and bias, distorting the findings.
+
+**Future Research:**
+
+In future research, we recommend:
+
+1. Incorporate data across multiple years to examine whether the relationships change over time;
+
+2. Use more complete and standardized data sources to improve reliability;
+
+3. Explore more granular geographic levels (e.g., county or city-level data) to gain deeper insights;
+
+4. Consider applying non-linear models to better capture complex relationships and improve model fit.
+
+**Policy Implications Conclusion:**
+
+The findings suggest that addressing education gaps, reducing income inequality, and fostering inclusive political engagement could reduce hate crime rates. Policies aimed at increasing educational access and income equality could help improve social stability and decrease hate crimes.
+
+**Conclusion:**
+
+In summary, a combined effort addressing political, social, and economic factors is needed to reduce hate crimes and promote a more inclusive society. Improving education and addressing income inequality could be key steps toward reducing social tensions and hate crimes.
